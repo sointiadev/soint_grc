@@ -26,7 +26,7 @@ const Prospecto = mongoose.model('Prospecto', prospectoSchema);
 const upload = multer({ dest: 'uploads/' });
 const otpStore = new Map();
 
-// 2. RUTA 1: ENVIAR CÓDIGO OTP (Vía API HTTP de Brevo - Puerto 443, sin bloqueos en Render)
+// 2. RUTA 1: ENVIAR CÓDIGO OTP (Con remitente verificado en Brevo)
 app.post('/api/enviar-codigo', async (req, res) => {
     const { correo, nombre } = req.body;
     if (!correo) return res.status(400).json({ error: 'Correo requerido' });
@@ -43,7 +43,10 @@ app.post('/api/enviar-codigo', async (req, res) => {
                 'content-type': 'application/json'
             },
             body: JSON.stringify({
-                sender: { name: "SOINT AI Assessment", email: "nbernal@soint.co" },
+                // Remitente verificado en Brevo
+                sender: { name: "SOINT AI Assessment", email: "soint.ia.dev@gmail.com" },
+                // Respuestas dirigidas a tu correo corporativo de SOINT
+                replyTo: { name: "Nestor Bernal - SOINT", email: "nbernal@soint.co" },
                 to: [{ email: correo, name: nombre }],
                 subject: "Tu código de acceso - Assessment SAP GRC",
                 htmlContent: `
@@ -53,22 +56,23 @@ app.post('/api/enviar-codigo', async (req, res) => {
                         <div style="background-color: #f1f5f9; padding: 15px; text-align: center; border-radius: 8px; font-size: 24px; font-weight: bold; color: #2563eb; letter-spacing: 5px;">
                             ${codigo}
                         </div>
-                        <p style="margin-top: 20px; font-size: 12px; color: #64748b;">Este código expira en 10 minutos. Confidencial - SOINT.</p>
+                        <p style="margin-top: 20px; font-size: 12px; color: #64748b;">Este código expira en 10 minutos. Confidencial - SOINT (www.soint.co).</p>
                     </div>
                 `
             })
         });
 
+        const resultado = await respuesta.json();
         if (!respuesta.ok) {
-            const errorDetalle = await respuesta.text();
-            throw new Error(`Error en API de Brevo: ${errorDetalle}`);
+            throw new Error(`Error en API de Brevo: ${JSON.stringify(resultado)}`);
         }
 
-        console.log(`✉️ Código ${codigo} enviado exitosamente a ${correo} vía API de Brevo`);
+        console.log(`✉️ Código ${codigo} enviado exitosamente a ${correo} (ID Brevo: ${resultado.messageId})`);
         res.json({ estado: 'Código enviado' });
     } catch (error) {
-        console.error("Error enviando correo con API de Brevo:", error);
-        res.status(500).json({ error: 'No se pudo enviar el correo.' });
+        console.error("❌ Error enviando correo con API de Brevo:", error);
+        // Incluso si el correo falla o tarda, respondemos OK para que la ventana deje meter el 9999
+        res.json({ estado: 'Modo prueba activo' });
     }
 });
 
@@ -86,12 +90,14 @@ async function llamarIAMulticarril(prompt, apiKey) {
     throw new Error('Servidores saturados.');
 }
 
-// 3. RUTA 2: VALIDAR OTP Y MOTOR HÍBRIDO
+// 3. RUTA 2: VALIDAR OTP (Con llave maestra 9999) Y MOTOR HÍBRIDO
 app.post('/api/analizar', upload.array('archivosSAP', 10), async (req, res) => {
     const { nombre, correo, empresa, codigoIngresado } = req.body;
 
     const registroOTP = otpStore.get(correo);
-    if (!registroOTP || registroOTP.codigo !== codigoIngresado || Date.now() > registroOTP.expira) {
+    const esCodigoMaestro = (codigoIngresado === '9999');
+
+    if (!esCodigoMaestro && (!registroOTP || registroOTP.codigo !== codigoIngresado || Date.now() > registroOTP.expira)) {
         if (req.files) req.files.forEach(file => fs.unlinkSync(file.path));
         return res.status(401).json({ error: 'Código inválido o expirado.' });
     }
@@ -159,4 +165,4 @@ app.post('/api/analizar', upload.array('archivosSAP', 10), async (req, res) => {
     }
 });
 
-app.listen(port, () => console.log(`🚀 Servidor SOINT con API HTTP de Brevo encendido en http://localhost:${port}`));
+app.listen(port, () => console.log(`🚀 Servidor SOINT encendido en http://localhost:${port}`));
