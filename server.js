@@ -4,7 +4,6 @@ const cors = require('cors');
 const fs = require('fs');
 const multer = require('multer');
 const mongoose = require('mongoose');
-const nodemailer = require('nodemailer');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -24,50 +23,51 @@ const prospectoSchema = new mongoose.Schema({
 });
 const Prospecto = mongoose.model('Prospecto', prospectoSchema);
 
-// 2. CONFIGURACIÓN DE NODEMAILER CON BREVO (SMTP sin bloqueos)
 const upload = multer({ dest: 'uploads/' });
 const otpStore = new Map();
 
-const transporter = nodemailer.createTransport({
-    host: 'smtp-relay.brevo.com',
-    port: 587,
-    secure: false, // true para 465, false para 587
-    auth: {
-        user: process.env.BREVO_USER, // Tu correo registrado en Brevo
-        pass: process.env.BREVO_PASS  // Tu contraseña SMTP / API Key de Brevo
-    }
-});
-
-// 3. RUTA 1: GENERAR Y ENVIAR CÓDIGO OTP (A cualquier correo corporativo)
+// 2. RUTA 1: ENVIAR CÓDIGO OTP (Vía API HTTP de Brevo - Puerto 443, sin bloqueos en Render)
 app.post('/api/enviar-codigo', async (req, res) => {
     const { correo, nombre } = req.body;
     if (!correo) return res.status(400).json({ error: 'Correo requerido' });
 
-    // Restricción B2B estricta opcional (puedes ajustarla si deseas)
     const codigo = Math.floor(1000 + Math.random() * 9000).toString();
     otpStore.set(correo, { codigo, expira: Date.now() + 10 * 60000 });
 
     try {
-        await transporter.sendMail({
-            from: '"SOINT AI Assessment" <nbernal@soint.co>',
-            to: correo,
-            subject: 'Tu código de acceso - Assessment SAP GRC',
-            html: `
-                <div style="font-family: Arial, sans-serif; color: #334155; padding: 20px;">
-                    <h2 style="color: #1e293b;">Hola ${nombre},</h2>
-                    <p>Para desbloquear tu Reporte Ejecutivo de Riesgos SAP GRC, ingresa el siguiente código de seguridad de 4 dígitos en la plataforma:</p>
-                    <div style="background-color: #f1f5f9; padding: 15px; text-align: center; border-radius: 8px; font-size: 24px; font-weight: bold; color: #2563eb; letter-spacing: 5px;">
-                        ${codigo}
+        const respuesta = await fetch('https://api.brevo.com/v3/smtp/email', {
+            method: 'POST',
+            headers: {
+                'accept': 'application/json',
+                'api-key': process.env.BREVO_API_KEY,
+                'content-type': 'application/json'
+            },
+            body: JSON.stringify({
+                sender: { name: "SOINT AI Assessment", email: "nbernal@soint.co" },
+                to: [{ email: correo, name: nombre }],
+                subject: "Tu código de acceso - Assessment SAP GRC",
+                htmlContent: `
+                    <div style="font-family: Arial, sans-serif; color: #334155; padding: 20px;">
+                        <h2 style="color: #1e293b;">Hola ${nombre},</h2>
+                        <p>Para desbloquear tu Reporte Ejecutivo de Riesgos SAP GRC, ingresa el siguiente código de seguridad de 4 dígitos:</p>
+                        <div style="background-color: #f1f5f9; padding: 15px; text-align: center; border-radius: 8px; font-size: 24px; font-weight: bold; color: #2563eb; letter-spacing: 5px;">
+                            ${codigo}
+                        </div>
+                        <p style="margin-top: 20px; font-size: 12px; color: #64748b;">Este código expira en 10 minutos. Confidencial - SOINT.</p>
                     </div>
-                    <p style="margin-top: 20px; font-size: 12px; color: #64748b;">Este código expira en 10 minutos. Confidencial - SOINT.</p>
-                </div>
-            `
+                `
+            })
         });
 
-        console.log(`✉️ Código ${codigo} enviado exitosamente a ${correo} vía Brevo SMTP`);
+        if (!respuesta.ok) {
+            const errorDetalle = await respuesta.text();
+            throw new Error(`Error en API de Brevo: ${errorDetalle}`);
+        }
+
+        console.log(`✉️ Código ${codigo} enviado exitosamente a ${correo} vía API de Brevo`);
         res.json({ estado: 'Código enviado' });
     } catch (error) {
-        console.error("Error enviando correo con Brevo:", error);
+        console.error("Error enviando correo con API de Brevo:", error);
         res.status(500).json({ error: 'No se pudo enviar el correo.' });
     }
 });
@@ -86,7 +86,7 @@ async function llamarIAMulticarril(prompt, apiKey) {
     throw new Error('Servidores saturados.');
 }
 
-// 4. RUTA 2: VALIDAR OTP Y MOTOR HÍBRIDO (NODE.JS + IA)
+// 3. RUTA 2: VALIDAR OTP Y MOTOR HÍBRIDO
 app.post('/api/analizar', upload.array('archivosSAP', 10), async (req, res) => {
     const { nombre, correo, empresa, codigoIngresado } = req.body;
 
@@ -109,7 +109,6 @@ app.post('/api/analizar', upload.array('archivosSAP', 10), async (req, res) => {
             fs.unlinkSync(file.path);
         });
 
-        // 🧠 MOTOR HÍBRIDO: Node.js escanea las vulnerabilidades matemáticamente
         const conteoSuperusuarios = (consolidadoDatosSAP.match(/SAP_ALL|SAP_NEW|\*,TCD/g) || []).length || 5; 
         const conteoTablas = (consolidadoDatosSAP.match(/S_TABU_DIS|S_TABU_NAM/g) || []).length || 4;
         const conteoSoD = (consolidadoDatosSAP.match(/\$BUKRS,\*|\$EKORG,\*|\$KOSTL,\*/g) || []).length || 5;
@@ -160,4 +159,4 @@ app.post('/api/analizar', upload.array('archivosSAP', 10), async (req, res) => {
     }
 });
 
-app.listen(port, () => console.log(`🚀 Servidor SOINT con Brevo SMTP encendido en http://localhost:${port}`));
+app.listen(port, () => console.log(`🚀 Servidor SOINT con API HTTP de Brevo encendido en http://localhost:${port}`));
