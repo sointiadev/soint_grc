@@ -4,7 +4,7 @@ const cors = require('cors');
 const fs = require('fs');
 const multer = require('multer');
 const mongoose = require('mongoose');
-const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -24,23 +24,33 @@ const prospectoSchema = new mongoose.Schema({
 });
 const Prospecto = mongoose.model('Prospecto', prospectoSchema);
 
-// 2. CONFIGURACIÓN DE RESEND Y OTP (Memoria temporal)
+// 2. CONFIGURACIÓN DE NODEMAILER CON BREVO (SMTP sin bloqueos)
 const upload = multer({ dest: 'uploads/' });
 const otpStore = new Map();
-const resend = new Resend(process.env.RESEND_API_KEY);
 
-// 3. RUTA 1: GENERAR Y ENVIAR CÓDIGO AL CORREO (Vía Resend API)
+const transporter = nodemailer.createTransport({
+    host: 'smtp-relay.brevo.com',
+    port: 587,
+    secure: false, // true para 465, false para 587
+    auth: {
+        user: process.env.BREVO_USER, // Tu correo registrado en Brevo
+        pass: process.env.BREVO_PASS  // Tu contraseña SMTP / API Key de Brevo
+    }
+});
+
+// 3. RUTA 1: GENERAR Y ENVIAR CÓDIGO OTP (A cualquier correo corporativo)
 app.post('/api/enviar-codigo', async (req, res) => {
     const { correo, nombre } = req.body;
     if (!correo) return res.status(400).json({ error: 'Correo requerido' });
 
+    // Restricción B2B estricta opcional (puedes ajustarla si deseas)
     const codigo = Math.floor(1000 + Math.random() * 9000).toString();
     otpStore.set(correo, { codigo, expira: Date.now() + 10 * 60000 });
 
     try {
-        const data = await resend.emails.send({
-            from: 'SOINT AI Assessment <onboarding@resend.dev>', // Por defecto Resend usa este dominio verificado para pruebas
-            to: [correo],
+        await transporter.sendMail({
+            from: '"SOINT AI Assessment" <nbernal@soint.co>',
+            to: correo,
             subject: 'Tu código de acceso - Assessment SAP GRC',
             html: `
                 <div style="font-family: Arial, sans-serif; color: #334155; padding: 20px;">
@@ -54,10 +64,10 @@ app.post('/api/enviar-codigo', async (req, res) => {
             `
         });
 
-        console.log(`✉️ Código ${codigo} enviado a ${correo} vía Resend`, data);
+        console.log(`✉️ Código ${codigo} enviado exitosamente a ${correo} vía Brevo SMTP`);
         res.json({ estado: 'Código enviado' });
     } catch (error) {
-        console.error("Error enviando correo con Resend:", error);
+        console.error("Error enviando correo con Brevo:", error);
         res.status(500).json({ error: 'No se pudo enviar el correo.' });
     }
 });
@@ -150,4 +160,4 @@ app.post('/api/analizar', upload.array('archivosSAP', 10), async (req, res) => {
     }
 });
 
-app.listen(port, () => console.log(`🚀 Servidor SOINT Híbrido con Resend encendido en http://localhost:${port}`));
+app.listen(port, () => console.log(`🚀 Servidor SOINT con Brevo SMTP encendido en http://localhost:${port}`));
