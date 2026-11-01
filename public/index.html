@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOINT | Assessment GRC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        .prose h2 { font-size: 1.15rem; font-weight: bold; color: #991b1b; margin-top: 1.2rem; margin-bottom: 0.5rem; border-bottom: 1px solid #fecaca; padding-bottom: 4px; }
+        .prose h3 { font-size: 0.95rem; font-weight: bold; color: #1e293b; margin-top: 0.75rem; margin-bottom: 0.25rem; }
+        .prose p { margin-bottom: 0.6rem; color: #334155; }
+        .prose ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 0.6rem; }
+        .prose li { margin-bottom: 0.2rem; color: #334155; }
+        .prose table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.8rem; background: white; }
+        .prose th { background-color: #1e293b; color: white; font-weight: bold; padding: 8px 10px; text-align: left; border: 1px solid #cbd5e1; }
+        .prose td { padding: 7px 10px; border: 1px solid #cbd5e1; color: #1e293b; }
+        .prose tr:nth-child(even) { background-color: #f8fafc; }
+
+        @page { size: letter; margin: 0mm; }
+        @media print {
+            body { margin: 0; padding: 0; background: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            body * { visibility: hidden; }
+            #zonaImpresionPDF, #zonaImpresionPDF * { visibility: visible; }
+            #zonaImpresionPDF { position: absolute; left: 0; top: 0; width: 100%; padding: 15mm 18mm !important; background: white !important; border: none !important; box-shadow: none !important; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 font-sans">
+    <div class="max-w-3xl mx-auto mt-10 mb-16 bg-white p-8 rounded-xl shadow-lg border border-slate-200">
+        <!-- Encabezado -->
+        <div class="text-center mb-6 no-print">
+            <img src="logo.png" alt="SOINT Soluciones Integrales & Tecnológicas" class="h-20 mx-auto mb-4 object-contain">
+            <h1 class="text-2xl font-bold text-slate-800">Assessment de Seguridad SAP GRC</h1>
+        </div>
+        
+        <!-- FASE 1: FORMULARIO DE DATOS -->
+        <div id="seccionFormulario" class="no-print">
+            <form id="uploadForm" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input type="text" id="nombreLead" placeholder="Tu Nombre y Apellido" class="w-full p-3 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-600" required>
+                    <input type="email" id="correoLead" placeholder="Correo Corporativo (Requerido)" class="w-full p-3 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-600" required>
+                    <input type="text" id="empresaLead" placeholder="Empresa / Organización" class="w-full p-3 border border-slate-300 rounded-lg outline-none md:col-span-2 focus:ring-2 focus:ring-blue-600" required>
+                </div>
+                
+                <div class="border-2 border-dashed border-blue-300 bg-blue-50/30 rounded-lg p-6 text-center hover:bg-blue-50/60 transition">
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Selecciona tus tablas SAP (Formato CSV)</label>
+                    <input type="file" id="archivosSAP" accept=".csv" multiple class="w-full text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white cursor-pointer" required>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition shadow-md">
+                    1. Enviar Código de Verificación al Correo
+                </button>
+            </form>
+        </div>
+
+        <!-- FASE 2: VERIFICACIÓN OTP -->
+        <div id="seccionOTP" class="hidden no-print bg-slate-100 p-8 rounded-lg border border-slate-200 text-center mt-6">
+            <h2 class="text-xl font-bold text-slate-800 mb-2">🔒 Verifica tu identidad</h2>
+            <p class="text-sm text-slate-600 mb-6">Hemos enviado un código de 4 dígitos a tu correo corporativo. Ingresalo para desencriptar el análisis.</p>
+            
+            <div class="flex justify-center mb-6">
+                <input type="text" id="codigoOTP" maxlength="4" placeholder="••••" class="w-32 text-center text-3xl tracking-[0.5em] font-bold p-3 border-2 border-blue-400 rounded-lg outline-none focus:ring-4 focus:ring-blue-200">
+            </div>
+            
+            <button id="btnVerificar" class="bg-slate-800 text-white font-bold py-3 px-8 rounded-lg hover:bg-slate-900 transition shadow-md w-full md:w-auto">
+                2. Verificar y Generar Reporte de Riesgos
+            </button>
+        </div>
+
+        <div id="loading" class="hidden mt-8 text-center no-print">
+            <p class="text-blue-600 font-semibold animate-pulse">Cruzando tablas SAP y evaluando vulnerabilidades...</p>
+        </div>
+
+        <!-- FASE 3: RESULTADO Y PDF -->
+        <div id="resultado" class="hidden mt-8">
+            <div id="zonaImpresionPDF" class="bg-white p-6 rounded-lg border border-slate-200">
+                <div style="text-align: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; margin-bottom: 20px;">
+                    <img src="logo.png" alt="SOINT" style="height: 50px; margin: 0 auto 10px auto; display: block;">
+                    <h2 style="font-size: 20px; font-weight: bold; color: #1e293b; margin-bottom: 5px;">Reporte Ejecutivo: Riesgos GRC y SoD</h2>
+                    <p style="font-weight: bold; font-size: 14px; color: #dc2626; margin-bottom: 5px;">🌐 www.soint.co | ✉️ nbernal@soint.co</p>
+                </div>
+                <div class="p-6 bg-red-50 border-l-4 border-red-600 rounded-r-lg shadow-sm mb-6">
+                    <h3 class="text-xl font-bold text-red-800 mb-4">🚨 Diagnóstico Ejecutivo de Vulnerabilidades</h3>
+                    <div id="textoReporteWeb" class="prose text-sm"></div>
+                </div>
+                <div style="text-align: center; border-top: 2px solid #e2e8f0; padding-top: 15px; font-size: 11px; color: #64748b; margin-top: 20px;">
+                    <p style="font-weight: bold; font-size: 12px; color: #334155; margin-bottom: 3px;">SOINT - Soluciones Integrales & Tecnológicas</p>
+                    <p>Documento confidencial para uso exclusivo del CISO, Auditoría Interna y Comité de Dirección.</p>
+                </div>
+            </div>
+            
+            <!-- Botones de Acción Final -->
+            <div class="text-center space-y-4 mt-8 no-print">
+                <button onclick="window.print()" class="w-full md:w-auto inline-block bg-slate-800 text-white font-bold py-3 px-8 rounded-lg hover:bg-slate-900 transition shadow-md md:mr-2">
+                    📥 Guardar Reporte PDF
+                </button>
+                <button onclick="location.reload()" class="w-full md:w-auto inline-block bg-blue-100 text-blue-800 font-bold py-3 px-8 rounded-lg hover:bg-blue-200 transition shadow-md md:ml-2">
+                    🔄 Hacer un Nuevo Análisis
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Paso 1: Pedir código
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const correo = document.getElementById('correoLead').value;
+            const nombre = document.getElementById('nombreLead').value;
+
+            document.getElementById('uploadForm').querySelector('button').innerText = "Enviando...";
+            
+            try {
+                const response = await fetch('/api/enviar-codigo', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ correo, nombre })
+                });
+                
+                if (response.ok) {
+                    document.getElementById('seccionFormulario').classList.add('hidden');
+                    document.getElementById('seccionOTP').classList.remove('hidden');
+                } else {
+                    alert('Hubo un problema enviando el código. Revisa tu correo.');
+                    document.getElementById('uploadForm').querySelector('button').innerText = "1. Enviar Código de Verificación al Correo";
+                }
+            } catch (error) {
+                alert('Error de conexión.');
+            }
+        });
+
+        // Paso 2: Verificar y Analizar
+        document.getElementById('btnVerificar').addEventListener('click', async () => {
+            const codigoIngresado = document.getElementById('codigoOTP').value;
+            if (codigoIngresado.length !== 4) return alert('Ingresa los 4 dígitos');
+
+            const fileInput = document.getElementById('archivosSAP');
+            const formData = new FormData();
+            
+            for (let i = 0; i < fileInput.files.length; i++) {
+                formData.append('archivosSAP', fileInput.files[i]);
+            }
+            formData.append('nombre', document.getElementById('nombreLead').value);
+            formData.append('correo', document.getElementById('correoLead').value);
+            formData.append('empresa', document.getElementById('empresaLead').value);
+            formData.append('codigoIngresado', codigoIngresado);
+
+            document.getElementById('seccionOTP').classList.add('hidden');
+            document.getElementById('loading').classList.remove('hidden');
+
+            try {
+                const response = await fetch('/api/analizar', { method: 'POST', body: formData });
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    document.getElementById('loading').classList.add('hidden');
+                    document.getElementById('seccionOTP').classList.remove('hidden');
+                    return alert(data.error || 'Código incorrecto o expirado.');
+                }
+
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('resultado').classList.remove('hidden');
+                
+                const htmlDiagnostic = marked.parse(data.diagnostico);
+                document.getElementById('textoReporteWeb').innerHTML = htmlDiagnostic;
+                
+            } catch (error) {
+                alert('Error al analizar las tablas.');
+                document.getElementById('loading').classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
