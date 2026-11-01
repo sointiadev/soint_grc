@@ -4,7 +4,7 @@ const cors = require('cors');
 const fs = require('fs');
 const multer = require('multer');
 const mongoose = require('mongoose');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -24,16 +24,12 @@ const prospectoSchema = new mongoose.Schema({
 });
 const Prospecto = mongoose.model('Prospecto', prospectoSchema);
 
-// 2. CONFIGURACIÓN DE CORREO Y OTP (Memoria temporal)
+// 2. CONFIGURACIÓN DE RESEND Y OTP (Memoria temporal)
 const upload = multer({ dest: 'uploads/' });
 const otpStore = new Map();
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
-});
-
-// 3. RUTA 1: GENERAR Y ENVIAR CÓDIGO AL CORREO
+// 3. RUTA 1: GENERAR Y ENVIAR CÓDIGO AL CORREO (Vía Resend API)
 app.post('/api/enviar-codigo', async (req, res) => {
     const { correo, nombre } = req.body;
     if (!correo) return res.status(400).json({ error: 'Correo requerido' });
@@ -41,28 +37,27 @@ app.post('/api/enviar-codigo', async (req, res) => {
     const codigo = Math.floor(1000 + Math.random() * 9000).toString();
     otpStore.set(correo, { codigo, expira: Date.now() + 10 * 60000 });
 
-    const mailOptions = {
-        from: `"SOINT AI Assessment" <${process.env.EMAIL_USER}>`,
-        to: correo,
-        subject: 'Tu código de acceso - Assessment SAP GRC',
-        html: `
-            <div style="font-family: Arial, sans-serif; color: #334155; padding: 20px;">
-                <h2 style="color: #1e293b;">Hola ${nombre},</h2>
-                <p>Para desbloquear tu Reporte Ejecutivo de Riesgos SAP GRC, ingresa el siguiente código de seguridad de 4 dígitos en la plataforma:</p>
-                <div style="background-color: #f1f5f9; padding: 15px; text-align: center; border-radius: 8px; font-size: 24px; font-weight: bold; color: #2563eb; letter-spacing: 5px;">
-                    ${codigo}
-                </div>
-                <p style="margin-top: 20px; font-size: 12px; color: #64748b;">Este código expira en 10 minutos. Confidencial - SOINT.</p>
-            </div>
-        `
-    };
-
     try {
-        await transporter.sendMail(mailOptions);
-        console.log(`✉️ Código ${codigo} enviado a ${correo}`);
+        const data = await resend.emails.send({
+            from: 'SOINT AI Assessment <onboarding@resend.dev>', // Por defecto Resend usa este dominio verificado para pruebas
+            to: [correo],
+            subject: 'Tu código de acceso - Assessment SAP GRC',
+            html: `
+                <div style="font-family: Arial, sans-serif; color: #334155; padding: 20px;">
+                    <h2 style="color: #1e293b;">Hola ${nombre},</h2>
+                    <p>Para desbloquear tu Reporte Ejecutivo de Riesgos SAP GRC, ingresa el siguiente código de seguridad de 4 dígitos en la plataforma:</p>
+                    <div style="background-color: #f1f5f9; padding: 15px; text-align: center; border-radius: 8px; font-size: 24px; font-weight: bold; color: #2563eb; letter-spacing: 5px;">
+                        ${codigo}
+                    </div>
+                    <p style="margin-top: 20px; font-size: 12px; color: #64748b;">Este código expira en 10 minutos. Confidencial - SOINT.</p>
+                </div>
+            `
+        });
+
+        console.log(`✉️ Código ${codigo} enviado a ${correo} vía Resend`, data);
         res.json({ estado: 'Código enviado' });
     } catch (error) {
-        console.error("Error enviando correo:", error);
+        console.error("Error enviando correo con Resend:", error);
         res.status(500).json({ error: 'No se pudo enviar el correo.' });
     }
 });
@@ -98,7 +93,6 @@ app.post('/api/analizar', upload.array('archivosSAP', 10), async (req, res) => {
         let consolidadoDatosSAP = "";
         let nombresArchivos = [];
 
-        // Leer los archivos en una sola cadena de texto gigante y borrarlos del disco
         req.files.forEach(file => {
             nombresArchivos.push(file.originalname);
             consolidadoDatosSAP += fs.readFileSync(file.path, 'utf8') + "\n";
@@ -114,7 +108,6 @@ app.post('/api/analizar', upload.array('archivosSAP', 10), async (req, res) => {
         
         const totalVulnerabilidades = conteoSuperusuarios + conteoTablas + conteoSoD + conteoDesarrollo + conteoExpirados;
 
-        // 🤖 IA: Solo se encarga de la redacción ejecutiva
         const prompt = `
         Actúa como Socio Director de Auditoría SAP GRC de la consultora SOINT.
         Nuestro motor matemático ya escaneó las tablas del cliente y encontró exactamente esto:
@@ -157,4 +150,4 @@ app.post('/api/analizar', upload.array('archivosSAP', 10), async (req, res) => {
     }
 });
 
-app.listen(port, () => console.log(`🚀 Servidor SOINT Híbrido encendido en http://localhost:${port}`));
+app.listen(port, () => console.log(`🚀 Servidor SOINT Híbrido con Resend encendido en http://localhost:${port}`));
