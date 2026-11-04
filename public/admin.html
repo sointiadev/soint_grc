@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOINT - Centro de Mando GRC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen p-8">
+
+    <div class="max-w-6xl mx-auto">
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Centro de Mando SOINT</h1>
+                <p class="text-slate-500 mt-1">Gestión de prospectos Assessment SAP GRC</p>
+            </div>
+            <a href="/" class="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors">← Ir al Assessment</a>
+        </div>
+
+        <!-- Tabla de Prospectos -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-100 border-b border-slate-200 text-sm font-semibold text-slate-600 uppercase tracking-wider">
+                        <th class="p-4">Fecha</th>
+                        <th class="p-4">Empresa</th>
+                        <th class="p-4">Contacto</th>
+                        <th class="p-4 text-center">Acciones (Reportes)</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-prospectos" class="divide-y divide-slate-100">
+                    <tr><td colspan="4" class="p-4 text-center text-slate-400">Cargando prospectos...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal para leer reportes -->
+    <div id="modal-reporte" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+                <h3 id="modal-titulo" class="font-bold text-lg text-slate-800">Cargando Reporte...</h3>
+                <button onclick="cerrarModal()" class="text-slate-400 hover:text-red-500 font-bold text-xl px-2">&times;</button>
+            </div>
+            <div id="modal-contenido" class="p-6 overflow-y-auto prose prose-slate max-w-none text-sm"></div>
+        </div>
+    </div>
+
+    <script>
+        async function cargarProspectos() {
+            try {
+                const respuesta = await fetch('/api/admin/prospectos');
+                const prospectos = await respuesta.json();
+                
+                const tbody = document.getElementById('tabla-prospectos');
+                tbody.innerHTML = '';
+
+                if(prospectos.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-slate-500">Aún no hay prospectos registrados.</td></tr>';
+                    return;
+                }
+
+                prospectos.forEach(p => {
+                    const fechaObj = new Date(p.fecha);
+                    const fechaFormateada = fechaObj.toLocaleDateString() + ' ' + fechaObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    
+                    // Escapamos el texto para poder pasarlo a la función de los botones
+                    const textoCliente = encodeURIComponent(p.diagnosticoCliente || 'No generado');
+                    const textoSoint = encodeURIComponent(p.diagnosticoTecnico || 'No generado');
+
+                    const fila = `
+                        <tr class="hover:bg-slate-50 transition-colors">
+                            <td class="p-4 text-sm text-slate-500">${fechaFormateada}</td>
+                            <td class="p-4 font-semibold text-slate-800">${p.empresa}</td>
+                            <td class="p-4">
+                                <div class="text-sm font-medium text-slate-900">${p.nombre}</div>
+                                <div class="text-xs text-slate-500">${p.correo}</div>
+                            </td>
+                            <td class="p-4 text-center space-x-2">
+                                <button onclick="abrirModal('Reporte Entregado al Cliente: ${p.empresa}', '${textoCliente}', false)" class="px-3 py-1.5 text-xs font-medium bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 border border-blue-200">
+                                    📄 Ver Cliente
+                                </button>
+                                <button onclick="abrirModal('Reporte Técnico Forense (SOINT): ${p.empresa}', '${textoSoint}', true)" class="px-3 py-1.5 text-xs font-medium bg-orange-50 text-orange-700 rounded-md hover:bg-orange-100 border border-orange-200">
+                                    🔐 Ver Forense
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += fila;
+                });
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('tabla-prospectos').innerHTML = '<tr><td colspan="4" class="p-4 text-center text-red-500">Error conectando con la base de datos.</td></tr>';
+            }
+        }
+
+        function abrirModal(titulo, contenidoCodificado, esTecnico) {
+            document.getElementById('modal-titulo').innerText = titulo;
+            const contenido = decodeURIComponent(contenidoCodificado);
+            
+            // Si es el técnico, le ponemos un fondo especial, si no, formato normal markdown
+            const contenedor = document.getElementById('modal-contenido');
+            if(esTecnico) {
+                contenedor.innerHTML = `<div class="bg-orange-50 border-l-4 border-orange-500 p-4 text-orange-900 rounded">${marked.parse(contenido)}</div>`;
+            } else {
+                contenedor.innerHTML = marked.parse(contenido);
+            }
+            
+            document.getElementById('modal-reporte').classList.remove('hidden');
+            document.getElementById('modal-reporte').classList.add('flex');
+        }
+
+        function cerrarModal() {
+            document.getElementById('modal-reporte').classList.add('hidden');
+            document.getElementById('modal-reporte').classList.remove('flex');
+        }
+
+        // Cargar los datos al abrir la página
+        cargarProspectos();
+    </script>
+
+</body>
+</html>
