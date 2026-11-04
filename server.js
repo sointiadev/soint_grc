@@ -84,14 +84,22 @@ app.post('/api/analizar', upload.array('archivosSAP', 10), async (req, res) => {
         const conteoTablas = (consolidadoDatosSAP.match(/S_TABU_DIS|S_TABU_NAM/g) || []).length || 4;
         const conteoSoD = (consolidadoDatosSAP.match(/\$BUKRS,\*|\$EKORG,\*|\$KOSTL,\*/g) || []).length || 5;
         const totalVulnerabilidades = conteoSuperusuarios + conteoTablas + conteoSoD + 6; 
+        
+        // Extraemos una porción de los datos reales del CSV para que la IA vea los nombres y roles exactos
+        const muestraDatos = consolidadoDatosSAP.substring(0, 3500);
 
         const prompt = `
         Actúa como Socio Director de Auditoría SAP GRC de SOINT.
-        Motor matemático encontró:
+        Motor matemático encontró estos totales:
         - Vulnerabilidades críticas: ${totalVulnerabilidades}
         - Accesos críticos: ${conteoSuperusuarios} casos
         - Manipulación tablas: ${conteoTablas} casos
         - Conflictos SoD: ${conteoSoD} casos
+
+        Muestra de datos crudos extraídos de las tablas SAP del cliente:
+        ---
+        ${muestraDatos}
+        ---
 
         Genera DOS reportes distintos, usando EXACTAMENTE estos separadores en mayúsculas:
 
@@ -102,8 +110,11 @@ app.post('/api/analizar', upload.array('archivosSAP', 10), async (req, res) => {
         3. Llamado a agendar sesión con SOINT).
 
         [REPORTE_SOINT]
-        (Diagnóstico técnico confidencial para el equipo de ventas de SOINT. Máximo 150 palabras.
-        Indica el número total de hallazgos críticos de forma directa, resalta los vectores más explotables y da una recomendación rápida sobre cómo abordar la reunión de ventas para causar impacto).
+        (REPORTE TÉCNICO FORENSE Y PLAN DE REMEDIACIÓN PARA CONSULTORES SOINT. NO HAY LÍMITE DE PALABRAS.
+        Estructura obligatoria:
+        1. Desglose de Hallazgos Críticos: Analiza la muestra de datos crudos y menciona explícitamente los IDs de usuarios SAP reales, roles y transacciones exactas que están generando los conflictos. NO uses máscaras.
+        2. Plan de Remediación Técnico (Paso a Paso): Para cada uno de los vectores identificados (Accesos críticos, Manipulación de tablas, SoD), detalla la solución técnica exacta que el equipo de SOINT debe implementar en el SAP del cliente (ej. objetos de autorización específicos a ajustar como S_TABU_DIS, roles derivados a rediseñar, o transacciones a bloquear).
+        3. Estrategia de Venta Técnica: Un párrafo final sobre cómo utilizar este nivel de detalle para cerrar el proyecto GRC.)
         `;
 
         const datosIA = await llamarIAMulticarril(prompt, process.env.GEMINI_API_KEY);
