@@ -3,114 +3,336 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SOINT | Assessment GRC</title>
+    <title>SOINT | Executive SAP GRC & SoD Assessment</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        .prose h2 { font-size: 1.15rem; font-weight: bold; color: #991b1b; margin-top: 1.2rem; margin-bottom: 0.5rem; border-bottom: 1px solid #fecaca; padding-bottom: 4px; }
-        .prose h3 { font-size: 0.95rem; font-weight: bold; color: #1e293b; margin-top: 0.75rem; margin-bottom: 0.25rem; }
-        .prose p { margin-bottom: 0.6rem; color: #334155; }
-        .prose ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 0.6rem; }
-        .prose li { margin-bottom: 0.2rem; color: #334155; }
-        .prose table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.8rem; background: white; }
-        .prose th { background-color: #1e293b; color: white; font-weight: bold; padding: 8px 10px; text-align: left; border: 1px solid #cbd5e1; }
-        .prose td { padding: 7px 10px; border: 1px solid #cbd5e1; color: #1e293b; }
-        .prose tr:nth-child(even) { background-color: #f8fafc; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        /* Estilos de Alta Consultoría para el Reporte Markdown */
+        .prose h2 { 
+            font-size: 1.1rem; 
+            font-weight: 800; 
+            color: #0f172a; 
+            margin-top: 1.75rem; 
+            margin-bottom: 0.75rem; 
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e2e8f0;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+            display: flex;
+            align-items: center;
+        }
+        .prose h2::before {
+            content: "";
+            display: inline-block;
+            width: 8px;
+            height: 18px;
+            background-color: #dc2626;
+            margin-right: 10px;
+            border-radius: 2px;
+        }
+        .prose h3 { font-size: 0.95rem; font-weight: 700; color: #1e293b; margin-top: 1rem; margin-bottom: 0.4rem; }
+        .prose p { margin-bottom: 0.85rem; color: #334155; line-height: 1.65; font-size: 0.9rem; }
+        .prose ul { list-style-type: none; padding-left: 0; margin-bottom: 1rem; }
+        .prose li { 
+            position: relative; 
+            padding-left: 1.5rem; 
+            margin-bottom: 0.5rem; 
+            color: #334155; 
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        .prose li::before {
+            content: "•";
+            color: #2563eb;
+            font-weight: bold;
+            font-size: 1.2rem;
+            position: absolute;
+            left: 0.25rem;
+            top: -2px;
+        }
+        .prose strong { color: #0f172a; font-weight: 700; }
+        
+        /* Tablas Ejecutivas */
+        .prose table { 
+            width: 100%; 
+            border-collapse: separate; 
+            border-spacing: 0;
+            margin: 1.25rem 0; 
+            font-size: 0.82rem; 
+            background: white; 
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .prose th { 
+            background-color: #0f172a; 
+            color: #f8fafc; 
+            font-weight: 700; 
+            padding: 10px 14px; 
+            text-align: left; 
+            text-transform: uppercase;
+            font-size: 0.72rem;
+            letter-spacing: 0.05em;
+        }
+        .prose td { 
+            padding: 10px 14px; 
+            border-top: 1px solid #e2e8f0; 
+            color: #1e293b; 
+            vertical-align: top;
+        }
+        .prose tr:nth-child(even) td { background-color: #f8fafc; }
 
-        @page { size: letter; margin: 0mm; }
+        /* Configuración de Impresión PDF Tamaño Carta */
+        @page { size: letter; margin: 12mm 15mm; }
         @media print {
             body { margin: 0; padding: 0; background: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-            body * { visibility: hidden; }
-            #zonaImpresionPDF, #zonaImpresionPDF * { visibility: visible; }
-            #zonaImpresionPDF { position: absolute; left: 0; top: 0; width: 100%; padding: 15mm 18mm !important; background: white !important; border: none !important; box-shadow: none !important; }
             .no-print { display: none !important; }
+            #contenedorPrincipal { max-width: 100% !important; margin: 0 !important; padding: 0 !important; box-shadow: none !important; border: none !important; }
+            #zonaImpresionPDF { padding: 0 !important; border: none !important; box-shadow: none !important; width: 100% !important; }
         }
     </style>
 </head>
-<body class="bg-slate-50 font-sans">
-    <div class="max-w-3xl mx-auto mt-10 mb-16 bg-white p-8 rounded-xl shadow-lg border border-slate-200">
-        <!-- Encabezado -->
-        <div class="text-center mb-6 no-print">
-            <img src="logo.png" alt="SOINT Soluciones Integrales & Tecnológicas" class="h-20 mx-auto mb-4 object-contain">
-            <h1 class="text-2xl font-bold text-slate-800">Assessment de Seguridad SAP GRC</h1>
-        </div>
-        
-        <!-- FASE 1: FORMULARIO DE DATOS -->
-        <div id="seccionFormulario" class="no-print">
-            <form id="uploadForm" class="space-y-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input type="text" id="nombreLead" placeholder="Tu Nombre y Apellido" class="w-full p-3 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-600" required>
-                    <input type="email" id="correoLead" placeholder="Correo Corporativo (Requerido)" class="w-full p-3 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-600" required>
-                    <input type="text" id="empresaLead" placeholder="Empresa / Organización" class="w-full p-3 border border-slate-300 rounded-lg outline-none md:col-span-2 focus:ring-2 focus:ring-blue-600" required>
-                </div>
-                
-                <div class="border-2 border-dashed border-blue-300 bg-blue-50/30 rounded-lg p-6 text-center hover:bg-blue-50/60 transition">
-                    <label class="block text-sm font-medium text-slate-700 mb-2">Selecciona tus tablas SAP (Formato CSV)</label>
-                    <input type="file" id="archivosSAP" accept=".csv" multiple class="w-full text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white cursor-pointer" required>
-                </div>
-                <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition shadow-md">
-                    1. Enviar Código de Verificación al Correo
-                </button>
-            </form>
-        </div>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col justify-between">
 
-        <!-- FASE 2: VERIFICACIÓN OTP -->
-        <div id="seccionOTP" class="hidden no-print bg-slate-100 p-8 rounded-lg border border-slate-200 text-center mt-6">
-            <h2 class="text-xl font-bold text-slate-800 mb-2">🔒 Verifica tu identidad</h2>
-            <p class="text-sm text-slate-600 mb-6">Hemos enviado un código de 4 dígitos a tu correo corporativo. Ingresalo para desencriptar el análisis.</p>
-            
-            <div class="flex justify-center mb-6">
-                <input type="text" id="codigoOTP" maxlength="4" placeholder="••••" class="w-32 text-center text-3xl tracking-[0.5em] font-bold p-3 border-2 border-blue-400 rounded-lg outline-none focus:ring-4 focus:ring-blue-200">
+    <!-- Barra Superior Corporativa -->
+    <header class="bg-slate-900 text-white border-b border-slate-800 no-print">
+        <div class="max-w-5xl mx-auto px-6 py-3.5 flex justify-between items-center text-xs">
+            <div class="flex items-center space-x-3">
+                <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span class="font-semibold tracking-wide text-slate-300 uppercase">SOINT Cybersecurity & SAP GRC Practice</span>
             </div>
-            
-            <button id="btnVerificar" class="bg-slate-800 text-white font-bold py-3 px-8 rounded-lg hover:bg-slate-900 transition shadow-md w-full md:w-auto">
-                2. Verificar y Generar Reporte de Riesgos
-            </button>
-        </div>
-
-        <div id="loading" class="hidden mt-8 text-center no-print">
-            <p class="text-blue-600 font-semibold animate-pulse">Cruzando tablas SAP y evaluando vulnerabilidades...</p>
-        </div>
-
-        <!-- FASE 3: RESULTADO Y PDF -->
-        <div id="resultado" class="hidden mt-8">
-            <div id="zonaImpresionPDF" class="bg-white p-6 rounded-lg border border-slate-200">
-                <div style="text-align: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; margin-bottom: 20px;">
-                    <img src="logo.png" alt="SOINT" style="height: 50px; margin: 0 auto 10px auto; display: block;">
-                    <h2 style="font-size: 20px; font-weight: bold; color: #1e293b; margin-bottom: 5px;">Reporte Ejecutivo: Riesgos GRC y SoD</h2>
-                    <p style="font-weight: bold; font-size: 14px; color: #dc2626; margin-bottom: 5px;">🌐 www.soint.co | ✉️ nbernal@soint.co</p>
-                </div>
-                <div class="p-6 bg-red-50 border-l-4 border-red-600 rounded-r-lg shadow-sm mb-6">
-                    <h3 class="text-xl font-bold text-red-800 mb-4">🚨 Diagnóstico Ejecutivo de Vulnerabilidades</h3>
-                    <div id="textoReporteWeb" class="prose text-sm"></div>
-                </div>
-                <div style="text-align: center; border-top: 2px solid #e2e8f0; padding-top: 15px; font-size: 11px; color: #64748b; margin-top: 20px;">
-                    <p style="font-weight: bold; font-size: 12px; color: #334155; margin-bottom: 3px;">SOINT - Soluciones Integrales & Tecnológicas</p>
-                    <p>Documento confidencial para uso exclusivo del CISO, Auditoría Interna y Comité de Dirección.</p>
-                </div>
-            </div>
-            
-            <!-- Botones de Acción Final -->
-            <div class="text-center space-y-4 mt-8 no-print">
-                <button onclick="window.print()" class="w-full md:w-auto inline-block bg-slate-800 text-white font-bold py-3 px-8 rounded-lg hover:bg-slate-900 transition shadow-md md:mr-2">
-                    📥 Guardar Reporte PDF
-                </button>
-                <button onclick="location.reload()" class="w-full md:w-auto inline-block bg-blue-100 text-blue-800 font-bold py-3 px-8 rounded-lg hover:bg-blue-200 transition shadow-md md:ml-2">
-                    🔄 Hacer un Nuevo Análisis
-                </button>
+            <div class="hidden sm:flex items-center space-x-6 text-slate-400">
+                <span>🔒 Transmisión Cifrada TLS 1.3</span>
+                <span>|</span>
+                <span>ISO/IEC 27001 Standard</span>
             </div>
         </div>
-    </div>
+    </header>
+
+    <!-- Contenedor Principal -->
+    <main class="flex-grow px-4 py-10">
+        <div id="contenedorPrincipal" class="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl border border-slate-200/80 overflow-hidden">
+            
+            <!-- Encabezado de Presentación (No se imprime en PDF porque el PDF tiene su propio membrete formal) -->
+            <div class="bg-gradient-to-b from-slate-50 to-white px-8 pt-8 pb-6 border-b border-slate-100 text-center no-print">
+                <img src="logo.png" alt="SOINT Soluciones Integrales & Tecnológicas" class="h-16 mx-auto mb-4 object-contain">
+                <div class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 mb-3">
+                    Auditoría Automatizada de Segregación de Funciones (SoD) y Accesos Críticos
+                </div>
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                    Executive SAP GRC Assessment
+                </h1>
+                <p class="text-sm text-slate-500 max-w-2xl mx-auto mt-2">
+                    Diagnóstico forense de vulnerabilidades en roles, perfiles críticos (<code class="text-xs bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">SAP_ALL</code>) y riesgos de fraude interno en tablas productivas.
+                </p>
+
+                <!-- Indicador de Pasos -->
+                <div class="flex items-center justify-center max-w-md mx-auto mt-6 text-xs font-semibold text-slate-400">
+                    <div id="step1-ind" class="flex items-center text-blue-600">
+                        <span class="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center mr-2">1</span>
+                        Carga Técnica
+                    </div>
+                    <div class="w-10 h-px bg-slate-200 mx-3"></div>
+                    <div id="step2-ind" class="flex items-center">
+                        <span class="w-6 h-6 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center mr-2">2</span>
+                        Verificación OTP
+                    </div>
+                    <div class="w-10 h-px bg-slate-200 mx-3"></div>
+                    <div id="step3-ind" class="flex items-center">
+                        <span class="w-6 h-6 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center mr-2">3</span>
+                        Dictamen GRC
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-8 sm:p-10">
+                <!-- FASE 1: FORMULARIO DE DATOS -->
+                <div id="seccionFormulario" class="no-print">
+                    <form id="uploadForm" class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Responsable / Cargo Directivo</label>
+                                <input type="text" id="nombreLead" placeholder="Ej. Carlos Mendoza - CISO / Director TI" class="w-full p-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm outline-none focus:bg-white focus:ring-2 focus:ring-blue-600 focus:border-transparent transition" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Correo Corporativo</label>
+                                <input type="email" id="correoLead" placeholder="cmendoza@suempresa.com" class="w-full p-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm outline-none focus:bg-white focus:ring-2 focus:ring-blue-600 focus:border-transparent transition" required>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Organización / Razón Social</label>
+                                <input type="text" id="empresaLead" placeholder="Nombre oficial de la empresa auditada" class="w-full p-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm outline-none focus:bg-white focus:ring-2 focus:ring-blue-600 focus:border-transparent transition" required>
+                            </div>
+                        </div>
+                        
+                        <!-- Zona de Carga de Archivos -->
+                        <div class="border-2 border-dashed border-slate-300 bg-slate-50/70 rounded-2xl p-8 text-center hover:border-blue-500 hover:bg-blue-50/30 transition group">
+                            <div class="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mx-auto mb-3 group-hover:scale-105 transition">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                            </div>
+                            <label class="block text-sm font-bold text-slate-800 mb-1">Carga de Tablas de Seguridad SAP (Formato CSV)</label>
+                            <p class="text-xs text-slate-500 mb-4">Exportaciones admitidas: <code class="font-mono text-slate-700">USR02</code>, <code class="font-mono text-slate-700">AGR_USERS</code>, <code class="font-mono text-slate-700">AGR_1251</code>, <code class="font-mono text-slate-700">UST04</code></p>
+                            <input type="file" id="archivosSAP" accept=".csv" multiple class="max-w-xs mx-auto text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-5 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-slate-900 file:text-white hover:file:bg-blue-700 cursor-pointer" required>
+                        </div>
+
+                        <!-- Sellos de Garantía -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs text-slate-500">
+                            <div class="flex items-center space-x-2 bg-slate-50 p-3 rounded-lg border border-slate-200/60">
+                                <span class="text-emerald-600 font-bold">✓</span>
+                                <span>Procesamiento en memoria efímera</span>
+                            </div>
+                            <div class="flex items-center space-x-2 bg-slate-50 p-3 rounded-lg border border-slate-200/60">
+                                <span class="text-emerald-600 font-bold">✓</span>
+                                <span>Anonimización automática de IDs</span>
+                            </div>
+                            <div class="flex items-center space-x-2 bg-slate-50 p-3 rounded-lg border border-slate-200/60">
+                                <span class="text-emerald-600 font-bold">✓</span>
+                                <span>Alineado a auditoría SOX / COBIT</span>
+                            </div>
+                        </div>
+
+                        <button type="submit" id="btnEnviarCodigo" class="w-full bg-blue-600 text-white font-bold py-4 px-6 rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-600/20 text-sm tracking-wide">
+                            Iniciar Validación de Seguridad y Solicitar PIN →
+                        </button>
+                    </form>
+                </div>
+
+                <!-- FASE 2: VERIFICACIÓN OTP -->
+                <div id="seccionOTP" class="hidden no-print max-w-md mx-auto bg-slate-50 p-8 rounded-2xl border border-slate-200 text-center my-4">
+                    <div class="w-12 h-12 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center mx-auto mb-4 font-bold text-xl">
+                        🔐
+                    </div>
+                    <h2 class="text-xl font-extrabold text-slate-900 mb-2">Verificación de Identidad Corporativa</h2>
+                    <p class="text-xs text-slate-600 mb-6 leading-relaxed">
+                        Por políticas de confidencialidad GRC, ingrese el código de autorización de 4 dígitos para desencriptar y procesar sus tablas SAP.
+                    </p>
+                    
+                    <div class="flex justify-center mb-6">
+                        <input type="text" id="codigoOTP" maxlength="4" placeholder="••••" class="w-40 text-center text-3xl tracking-[0.4em] font-extrabold p-3.5 bg-white border-2 border-slate-300 rounded-xl outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-100 transition">
+                    </div>
+                    
+                    <button id="btnVerificar" class="w-full bg-slate-900 text-white font-bold py-3.5 px-8 rounded-xl hover:bg-blue-700 transition shadow-md text-sm">
+                        Desencriptar y Ejecutar Motor de Auditoría
+                    </button>
+                </div>
+
+                <!-- ESTADO DE CARGA -->
+                <div id="loading" class="hidden py-12 text-center no-print">
+                    <div class="inline-block w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+                    <h3 class="text-lg font-bold text-slate-900">Ejecutando Motor Forense SAP GRC...</h3>
+                    <p class="text-xs text-slate-500 mt-1">Evaluando objetos de autorización críticos, perfiles <code class="font-mono">SAP_ALL</code> y matrices de riesgo SoD.</p>
+                </div>
+
+                <!-- FASE 3: RESULTADO EJECUTIVO Y DOCUMENTO PDF -->
+                <div id="resultado" class="hidden">
+                    <div id="zonaImpresionPDF" class="bg-white p-8 sm:p-10 rounded-xl border border-slate-300 shadow-sm">
+                        
+                        <!-- Membrete Oficial de Auditoría -->
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b-2 border-slate-900 pb-6 mb-6 gap-4">
+                            <div class="flex items-center space-x-4">
+                                <img src="logo.png" alt="SOINT" class="h-12 object-contain">
+                                <div class="border-l-2 border-slate-200 pl-4">
+                                    <span class="text-[10px] font-extrabold uppercase tracking-widest text-blue-700 block">Práctica de Auditoría & GRC</span>
+                                    <h2 class="text-lg font-extrabold text-slate-900 leading-tight">Dictamen Ejecutivo de Riesgos SAP</h2>
+                                </div>
+                            </div>
+                            <div class="text-left sm:text-right text-xs text-slate-600 space-y-0.5">
+                                <div class="inline-block px-2.5 py-0.5 bg-red-100 text-red-800 font-bold rounded text-[10px] uppercase tracking-wider mb-1">
+                                    Estricto Confidencial
+                                </div>
+                                <p><strong>Ref:</strong> <span id="refDocId" class="font-mono">SOINT-GRC-2026</span></p>
+                                <p><strong>Fecha:</strong> <span id="fechaReporte"></span></p>
+                            </div>
+                        </div>
+
+                        <!-- Ficha Técnica de la Entidad Auditada -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-lg border border-slate-200 mb-6 text-xs">
+                            <div>
+                                <span class="text-slate-400 font-semibold uppercase block text-[10px]">Entidad Evaluada</span>
+                                <span id="metaEmpresa" class="font-bold text-slate-900 text-sm">—</span>
+                            </div>
+                            <div>
+                                <span class="text-slate-400 font-semibold uppercase block text-[10px]">Ejecutivo Solicitante</span>
+                                <span id="metaNombre" class="font-semibold text-slate-800">—</span>
+                            </div>
+                            <div>
+                                <span class="text-slate-400 font-semibold uppercase block text-[10px]">Práctica Consultora</span>
+                                <span class="font-semibold text-blue-700">SOINT (www.soint.co)</span>
+                            </div>
+                        </div>
+
+                        <!-- Alerta Ejecutiva Superior -->
+                        <div class="bg-red-50/80 border-l-4 border-red-600 p-4 rounded-r-lg mb-6 flex items-start space-x-3">
+                            <span class="text-red-600 text-lg leading-none mt-0.5">⚠️</span>
+                            <div class="text-xs text-red-950 leading-relaxed">
+                                <strong class="font-bold uppercase tracking-wide block mb-0.5 text-red-800">Aviso de Exposición de Control Interno</strong>
+                                El presente informe resume las desviaciones críticas detectadas en los archivos de configuración suministrados. Por seguridad de la información, los identificadores reales de usuarios han sido enmascarados en esta vista ejecutiva.
+                            </div>
+                        </div>
+
+                        <!-- Cuerpo del Reporte Generado por IA -->
+                        <div id="textoReporteWeb" class="prose max-w-none"></div>
+
+                        <!-- Pie de Firma de Socio / Consultoría -->
+                        <div class="mt-10 pt-5 border-t-2 border-slate-200 flex flex-col sm:flex-row justify-between items-center text-[11px] text-slate-500 gap-4">
+                            <div>
+                                <p class="font-bold text-slate-800">SOINT — Soluciones Integrales & Tecnológicas</p>
+                                <p>Consultoría Especializada en SAP GRC, Segregación de Funciones (SoD) y Ciberseguridad.</p>
+                            </div>
+                            <div class="text-left sm:text-right">
+                                <p class="font-semibold text-slate-800">🌐 www.soint.co | ✉️ nbernal@soint.co</p>
+                                <p>Uso exclusivo para Comité de Auditoría, CISO y Dirección de TI.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Botones de Acción Final -->
+                    <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8 no-print">
+                        <button onclick="window.print()" class="w-full sm:w-auto bg-slate-900 text-white font-bold py-3.5 px-8 rounded-xl hover:bg-slate-800 transition shadow-lg text-sm flex items-center justify-center gap-2">
+                            <span>📥</span> Descargar Dictamen Oficial (PDF)
+                        </button>
+                        <a href="mailto:nbernal@soint.co?subject=Solicitud%20de%20Sesi%C3%B3n%20Ejecutiva%20-%20Desanonimizaci%C3%B3n%20SAP%20GRC" class="w-full sm:w-auto bg-blue-600 text-white font-bold py-3.5 px-8 rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-600/20 text-sm text-center">
+                            📅 Agendar Mesa Técnica con Socio SOINT
+                        </a>
+                        <button onclick="location.reload()" class="w-full sm:w-auto bg-slate-200 text-slate-700 font-semibold py-3.5 px-6 rounded-xl hover:bg-slate-300 transition text-sm">
+                            🔄 Nueva Evaluación
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Pie de Página Web -->
+    <footer class="text-center py-6 text-xs text-slate-400 no-print">
+        © 2026 SOINT — Soluciones Integrales & Tecnológicas. Todos los derechos reservados.
+    </footer>
 
     <script>
-        // Paso 1: Pedir código
+        function actualizarIndicadorPaso(paso) {
+            const s1 = document.getElementById('step1-ind');
+            const s2 = document.getElementById('step2-ind');
+            const s3 = document.getElementById('step3-ind');
+            if (paso === 2) {
+                s2.classList.add('text-blue-600');
+                s2.querySelector('span').className = 'w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center mr-2';
+            } else if (paso === 3) {
+                s3.classList.add('text-blue-600');
+                s3.querySelector('span').className = 'w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center mr-2';
+            }
+        }
+
+        // Paso 1: Solicitar Código OTP
         document.getElementById('uploadForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const correo = document.getElementById('correoLead').value;
             const nombre = document.getElementById('nombreLead').value;
-
-            document.getElementById('uploadForm').querySelector('button').innerText = "Enviando...";
+            const btn = document.getElementById('btnEnviarCodigo');
+            btn.innerText = "Generando canal seguro...";
+            btn.disabled = true;
             
             try {
                 const response = await fetch('/api/enviar-codigo', {
@@ -122,29 +344,36 @@
                 if (response.ok) {
                     document.getElementById('seccionFormulario').classList.add('hidden');
                     document.getElementById('seccionOTP').classList.remove('hidden');
+                    actualizarIndicadorPaso(2);
                 } else {
-                    alert('Hubo un problema enviando el código. Revisa tu correo.');
-                    document.getElementById('uploadForm').querySelector('button').innerText = "1. Enviar Código de Verificación al Correo";
+                    alert('No fue posible procesar la solicitud. Verifique el correo ingresado.');
+                    btn.innerText = "Iniciar Validación de Seguridad y Solicitar PIN →";
+                    btn.disabled = false;
                 }
             } catch (error) {
-                alert('Error de conexión.');
+                alert('Error de conexión con el servidor GRC.');
+                btn.innerText = "Iniciar Validación de Seguridad y Solicitar PIN →";
+                btn.disabled = false;
             }
         });
 
-        // Paso 2: Verificar y Analizar
+        // Paso 2: Verificar OTP y Ejecutar Análisis
         document.getElementById('btnVerificar').addEventListener('click', async () => {
             const codigoIngresado = document.getElementById('codigoOTP').value;
-            if (codigoIngresado.length !== 4) return alert('Ingresa los 4 dígitos');
+            if (codigoIngresado.length !== 4) return alert('Por favor ingrese el código de 4 dígitos.');
 
+            const nombre = document.getElementById('nombreLead').value;
+            const correo = document.getElementById('correoLead').value;
+            const empresa = document.getElementById('empresaLead').value;
             const fileInput = document.getElementById('archivosSAP');
-            const formData = new FormData();
             
+            const formData = new FormData();
             for (let i = 0; i < fileInput.files.length; i++) {
                 formData.append('archivosSAP', fileInput.files[i]);
             }
-            formData.append('nombre', document.getElementById('nombreLead').value);
-            formData.append('correo', document.getElementById('correoLead').value);
-            formData.append('empresa', document.getElementById('empresaLead').value);
+            formData.append('nombre', nombre);
+            formData.append('correo', correo);
+            formData.append('empresa', empresa);
             formData.append('codigoIngresado', codigoIngresado);
 
             document.getElementById('seccionOTP').classList.add('hidden');
@@ -157,18 +386,25 @@
                 if (!response.ok) {
                     document.getElementById('loading').classList.add('hidden');
                     document.getElementById('seccionOTP').classList.remove('hidden');
-                    return alert(data.error || 'Código incorrecto o expirado.');
+                    return alert(data.error || 'Código inválido o expirado.');
                 }
+
+                // Poblar metadatos del membrete ejecutivo
+                document.getElementById('metaEmpresa').innerText = empresa;
+                document.getElementById('metaNombre').innerText = `${nombre} (${correo})`;
+                document.getElementById('fechaReporte').innerText = new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+                document.getElementById('refDocId').innerText = 'SOINT-' + Math.floor(100000 + Math.random() * 900000);
 
                 document.getElementById('loading').classList.add('hidden');
                 document.getElementById('resultado').classList.remove('hidden');
+                actualizarIndicadorPaso(3);
                 
-                const htmlDiagnostic = marked.parse(data.diagnostico);
-                document.getElementById('textoReporteWeb').innerHTML = htmlDiagnostic;
+                document.getElementById('textoReporteWeb').innerHTML = marked.parse(data.diagnostico);
                 
             } catch (error) {
-                alert('Error al analizar las tablas.');
+                alert('Error procesando el análisis de las tablas SAP.');
                 document.getElementById('loading').classList.add('hidden');
+                document.getElementById('seccionOTP').classList.remove('hidden');
             }
         });
     </script>

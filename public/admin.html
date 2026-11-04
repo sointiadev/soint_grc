@@ -3,107 +3,268 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SOINT - Centro de Mando GRC</title>
+    <title>SOINT | Centro de Mando GRC & Inteligencia Comercial</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-</head>
-<body class="bg-slate-50 text-slate-800 font-sans min-h-screen p-8">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        .prose h1, .prose h2, .prose h3 { color: #0f172a; font-weight: 800; margin-top: 1.25rem; margin-bottom: 0.5rem; }
+        .prose h2 { font-size: 1.1rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.35rem; }
+        .prose h3 { font-size: 0.95rem; }
+        .prose p { color: #334155; font-size: 0.9rem; line-height: 1.65; margin-bottom: 0.75rem; }
+        .prose ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 0.85rem; }
+        .prose li { color: #334155; font-size: 0.9rem; margin-bottom: 0.3rem; }
+        .prose strong { color: #0f172a; font-weight: 700; }
+        .prose code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; color: #0f172a; font-weight: 600; }
+        .prose table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.82rem; background: white; }
+        .prose th { background-color: #0f172a; color: white; font-weight: 700; padding: 8px 12px; text-align: left; }
+        .prose td { padding: 8px 12px; border: 1px solid #e2e8f0; color: #1e293b; }
 
-    <div class="max-w-6xl mx-auto">
-        <div class="flex items-center justify-between mb-8">
-            <div>
-                <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Centro de Mando SOINT</h1>
-                <p class="text-slate-500 mt-1">Gestión de prospectos Assessment SAP GRC</p>
+        @media print {
+            body * { visibility: hidden; }
+            #modal-reporte, #modal-reporte * { visibility: visible; }
+            #modal-reporte { position: absolute; left: 0; top: 0; width: 100%; background: white !important; padding: 0 !important; }
+            #modal-caja { max-width: 100% !important; max-height: none !important; box-shadow: none !important; border: none !important; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen">
+
+    <!-- Barra de Navegación Ejecutiva -->
+    <nav class="bg-slate-900 text-white border-b border-slate-800 shadow-md no-print">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-4">
+                <div class="bg-white p-1.5 rounded-lg">
+                    <img src="logo.png" alt="Logo SOINT" class="h-9 object-contain">
+                </div>
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <h1 class="text-lg font-extrabold tracking-tight text-white">Centro de Mando GRC</h1>
+                        <span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-full">
+                            Uso Interno SOINT
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-400">Inteligencia Comercial, Desanonimización Forense y Planes de Remediación SAP</p>
+                </div>
             </div>
-            <a href="/" class="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors">← Ir al Assessment</a>
+            <div class="flex items-center space-x-3">
+                <button onclick="cargarProspectos()" class="px-3.5 py-2 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg border border-slate-700 transition">
+                    🔄 Actualizar Bóveda
+                </button>
+                <a href="/" class="px-4 py-2 text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition shadow-sm">
+                    ← Ir al Portal de Clientes
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenido Principal -->
+    <main class="max-w-7xl mx-auto px-6 py-8 no-print">
+        
+        <!-- Tarjetas de KPIs -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 flex items-center justify-between">
+                <div>
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Empresas Evaluadas</span>
+                    <span id="kpi-total" class="text-3xl font-extrabold text-slate-900 mt-1 block">0</span>
+                    <span class="text-[11px] text-emerald-600 font-semibold mt-1 block">● Almacenadas en MongoDB Atlas</span>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl font-bold">
+                    🏢
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 flex items-center justify-between">
+                <div>
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Auditorías Hoy</span>
+                    <span id="kpi-hoy" class="text-3xl font-extrabold text-slate-900 mt-1 block">0</span>
+                    <span class="text-[11px] text-slate-500 mt-1 block">Generación Dual Activa</span>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl font-bold">
+                    ⚡
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 flex items-center justify-between">
+                <div>
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Motor Forense IA</span>
+                    <span class="text-lg font-extrabold text-slate-900 mt-1 block">Doble Reporte GRC</span>
+                    <span class="text-[11px] text-blue-600 font-semibold mt-1 block">Cliente (Máscaras) + Consultor (Crudo)</span>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl font-bold">
+                    🛡️
+                </div>
+            </div>
+        </div>
+
+        <!-- Barra de Búsqueda y Filtro -->
+        <div class="bg-white rounded-t-2xl border border-b-0 border-slate-200 px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div>
+                <h2 class="text-base font-extrabold text-slate-900">Expedientes de Prospectos y Matrices de Remediación</h2>
+                <p class="text-xs text-slate-500">Consulta el informe ejecutivo entregado al cliente o despliega el plan forense desanonimizado.</p>
+            </div>
+            <div class="w-full sm:w-72">
+                <input type="text" id="buscador" oninput="filtrarTabla()" placeholder="🔍 Buscar por empresa o contacto..." class="w-full px-4 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg outline-none focus:bg-white focus:ring-2 focus:ring-blue-600">
+            </div>
         </div>
 
         <!-- Tabla de Prospectos -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <table class="w-full text-left border-collapse">
-                <thead>
-                    <tr class="bg-slate-100 border-b border-slate-200 text-sm font-semibold text-slate-600 uppercase tracking-wider">
-                        <th class="p-4">Fecha</th>
-                        <th class="p-4">Empresa</th>
-                        <th class="p-4">Contacto</th>
-                        <th class="p-4 text-center">Acciones (Reportes)</th>
-                    </tr>
-                </thead>
-                <tbody id="tabla-prospectos" class="divide-y divide-slate-100">
-                    <tr><td colspan="4" class="p-4 text-center text-slate-400">Cargando prospectos...</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Modal para leer reportes -->
-    <div id="modal-reporte" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
-            <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
-                <h3 id="modal-titulo" class="font-bold text-lg text-slate-800">Cargando Reporte...</h3>
-                <button onclick="cerrarModal()" class="text-slate-400 hover:text-red-500 font-bold text-xl px-2">&times;</button>
+        <div class="bg-white rounded-b-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-900 text-slate-200 text-[11px] font-bold uppercase tracking-wider">
+                            <th class="p-4">Fecha / Hora</th>
+                            <th class="p-4">Organización</th>
+                            <th class="p-4">Ejecutivo / Contacto</th>
+                            <th class="p-4">Tablas Analizadas</th>
+                            <th class="p-4 text-right">Expedientes de Auditoría</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-prospectos" class="divide-y divide-slate-100 text-sm">
+                        <tr><td colspan="5" class="p-8 text-center text-slate-400">Consultando bóveda de MongoDB Atlas...</td></tr>
+                    </tbody>
+                </table>
             </div>
-            <div id="modal-contenido" class="p-6 overflow-y-auto prose prose-slate max-w-none text-sm"></div>
+        </div>
+    </main>
+
+    <!-- Modal para Lectura e Impresión de Reportes -->
+    <div id="modal-reporte" class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div id="modal-caja" class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden border border-slate-200">
+            
+            <!-- Encabezado del Modal -->
+            <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+                <div class="flex items-center space-x-3">
+                    <img src="logo.png" alt="SOINT" class="h-8 object-contain">
+                    <div>
+                        <span id="modal-badge" class="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded"></span>
+                        <h3 id="modal-titulo" class="font-extrabold text-base text-slate-900 mt-0.5">Cargando Reporte...</h3>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2 no-print">
+                    <button onclick="window.print()" class="px-3.5 py-1.5 text-xs font-bold bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition">
+                        🖨️ Imprimir / Guardar PDF
+                    </button>
+                    <button onclick="cerrarModal()" class="text-slate-400 hover:text-red-600 font-bold text-2xl px-2 leading-none">&times;</button>
+                </div>
+            </div>
+
+            <!-- Cuerpo del Modal -->
+            <div id="modal-contenido" class="p-8 overflow-y-auto prose max-w-none"></div>
         </div>
     </div>
 
     <script>
+        let listaProspectosGlobal = [];
+
         async function cargarProspectos() {
             try {
                 const respuesta = await fetch('/api/admin/prospectos');
                 const prospectos = await respuesta.json();
+                listaProspectosGlobal = prospectos;
                 
-                const tbody = document.getElementById('tabla-prospectos');
-                tbody.innerHTML = '';
-
-                if(prospectos.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-slate-500">Aún no hay prospectos registrados.</td></tr>';
-                    return;
-                }
-
-                prospectos.forEach(p => {
-                    const fechaObj = new Date(p.fecha);
-                    const fechaFormateada = fechaObj.toLocaleDateString() + ' ' + fechaObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                    
-                    // Escapamos el texto para poder pasarlo a la función de los botones
-                    const textoCliente = encodeURIComponent(p.diagnosticoCliente || 'No generado');
-                    const textoSoint = encodeURIComponent(p.diagnosticoTecnico || 'No generado');
-
-                    const fila = `
-                        <tr class="hover:bg-slate-50 transition-colors">
-                            <td class="p-4 text-sm text-slate-500">${fechaFormateada}</td>
-                            <td class="p-4 font-semibold text-slate-800">${p.empresa}</td>
-                            <td class="p-4">
-                                <div class="text-sm font-medium text-slate-900">${p.nombre}</div>
-                                <div class="text-xs text-slate-500">${p.correo}</div>
-                            </td>
-                            <td class="p-4 text-center space-x-2">
-                                <button onclick="abrirModal('Reporte Entregado al Cliente: ${p.empresa}', '${textoCliente}', false)" class="px-3 py-1.5 text-xs font-medium bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 border border-blue-200">
-                                    📄 Ver Cliente
-                                </button>
-                                <button onclick="abrirModal('Reporte Técnico Forense (SOINT): ${p.empresa}', '${textoSoint}', true)" class="px-3 py-1.5 text-xs font-medium bg-orange-50 text-orange-700 rounded-md hover:bg-orange-100 border border-orange-200">
-                                    🔐 Ver Forense
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                    tbody.innerHTML += fila;
-                });
+                actualizarKPIs(prospectos);
+                renderizarTabla(prospectos);
             } catch (error) {
                 console.error('Error:', error);
-                document.getElementById('tabla-prospectos').innerHTML = '<tr><td colspan="4" class="p-4 text-center text-red-500">Error conectando con la base de datos.</td></tr>';
+                document.getElementById('tabla-prospectos').innerHTML = '<tr><td colspan="5" class="p-6 text-center text-red-600 font-semibold">Error conectando con la base de datos MongoDB Atlas.</td></tr>';
             }
         }
 
-        function abrirModal(titulo, contenidoCodificado, esTecnico) {
-            document.getElementById('modal-titulo').innerText = titulo;
-            const contenido = decodeURIComponent(contenidoCodificado);
-            
-            // Si es el técnico, le ponemos un fondo especial, si no, formato normal markdown
+        function actualizarKPIs(prospectos) {
+            document.getElementById('kpi-total').innerText = prospectos.length;
+            const hoyStr = new Date().toLocaleDateString();
+            const conteoHoy = prospectos.filter(p => new Date(p.fecha).toLocaleDateString() === hoyStr).length;
+            document.getElementById('kpi-hoy').innerText = conteoHoy;
+        }
+
+        function renderizarTabla(prospectos) {
+            const tbody = document.getElementById('tabla-prospectos');
+            tbody.innerHTML = '';
+
+            if (prospectos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-slate-400">Aún no hay evaluaciones registradas en la base de datos.</td></tr>';
+                return;
+            }
+
+            prospectos.forEach(p => {
+                const fechaObj = new Date(p.fecha);
+                const fechaFormateada = fechaObj.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+                const horaFormateada = fechaObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                
+                // Soporte retrocompatible por si hay registros antiguos con el campo 'diagnostico'
+                const textoCliente = encodeURIComponent(p.diagnosticoCliente || p.diagnostico || 'Reporte no disponible');
+                const textoSoint = encodeURIComponent(p.diagnosticoTecnico || 'Este registro fue creado antes de activar el motor forense dual. Realice una nueva prueba para ver el plan de remediación detallado.');
+                
+                const archivos = (p.tablasAnalizadas && p.tablasAnalizadas.length > 0) 
+                    ? p.tablasAnalizadas.map(a => `<span class="inline-block bg-slate-100 text-slate-700 font-mono text-[10px] px-2 py-0.5 rounded border border-slate-200 mr-1 mb-1">${a}</span>`).join('')
+                    : '<span class="text-xs text-slate-400">CSV Estándar</span>';
+
+                const fila = `
+                    <tr class="hover:bg-slate-50/90 transition-colors">
+                        <td class="p-4 whitespace-nowrap">
+                            <div class="font-bold text-slate-800 text-xs">${fechaFormateada}</div>
+                            <div class="text-[11px] text-slate-400">${horaFormateada}</div>
+                        </td>
+                        <td class="p-4">
+                            <div class="font-extrabold text-slate-900">${p.empresa || 'Sin especificar'}</div>
+                        </td>
+                        <td class="p-4">
+                            <div class="text-xs font-bold text-slate-800">${p.nombre || '—'}</div>
+                            <div class="text-xs text-blue-600">${p.correo || '—'}</div>
+                        </td>
+                        <td class="p-4 max-w-xs">
+                            ${archivos}
+                        </td>
+                        <td class="p-4 text-right whitespace-nowrap space-x-2">
+                            <button onclick="abrirModal('${p.empresa}', '${textoCliente}', false)" class="px-3.5 py-2 text-xs font-bold bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 border border-blue-200 transition">
+                                📄 Vista Cliente
+                            </button>
+                            <button onclick="abrirModal('${p.empresa}', '${textoSoint}', true)" class="px-3.5 py-2 text-xs font-bold bg-slate-900 text-amber-300 rounded-lg hover:bg-slate-800 border border-slate-700 transition shadow-sm">
+                                🔐 Forense y Remediación
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += fila;
+            });
+        }
+
+        function filtrarTabla() {
+            const termino = document.getElementById('buscador').value.toLowerCase();
+            const filtrados = listaProspectosGlobal.filter(p => 
+                (p.empresa && p.empresa.toLowerCase().includes(termino)) ||
+                (p.nombre && p.nombre.toLowerCase().includes(termino)) ||
+                (p.correo && p.correo.toLowerCase().includes(termino))
+            );
+            renderizarTabla(filtrados);
+        }
+
+        function abrirModal(empresa, contenidoCodificado, esTecnico) {
+            const badge = document.getElementById('modal-badge');
+            const titulo = document.getElementById('modal-titulo');
             const contenedor = document.getElementById('modal-contenido');
-            if(esTecnico) {
-                contenedor.innerHTML = `<div class="bg-orange-50 border-l-4 border-orange-500 p-4 text-orange-900 rounded">${marked.parse(contenido)}</div>`;
+            const contenido = decodeURIComponent(contenidoCodificado);
+
+            if (esTecnico) {
+                badge.className = "text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300";
+                badge.innerText = "Confidencial Consultores SOINT — Desanonimizado";
+                titulo.innerText = `Matriz Forense y Plan de Remediación: ${empresa}`;
+                contenedor.innerHTML = `
+                    <div class="bg-amber-50/70 border-l-4 border-amber-500 p-5 rounded-r-xl mb-4">
+                        <p class="text-xs font-bold uppercase tracking-wider text-amber-900 mb-1">Hoja de Ruta Técnica y Comercial para Cierre de Proyecto</p>
+                        <p class="text-xs text-amber-800 m-0">Este documento contiene los identificadores reales extraídos de los CSV y los objetos de autorización exactos a intervenir.</p>
+                    </div>
+                    <div>${marked.parse(contenido)}</div>
+                `;
             } else {
+                badge.className = "text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded bg-blue-100 text-blue-800 border border-blue-200";
+                badge.innerText = "Copia Exacta del Dictamen Entregado al Cliente";
+                titulo.innerText = `Reporte Ejecutivo de Riesgos GRC: ${empresa}`;
                 contenedor.innerHTML = marked.parse(contenido);
             }
             
@@ -116,9 +277,7 @@
             document.getElementById('modal-reporte').classList.remove('flex');
         }
 
-        // Cargar los datos al abrir la página
         cargarProspectos();
     </script>
-
 </body>
 </html>
