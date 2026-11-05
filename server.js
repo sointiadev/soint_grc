@@ -45,7 +45,7 @@ app.post('/api/enviar-codigo', async (req, res) => {
 });
 
 async function llamarIAMulticarril(prompt, apiKey) {
-    const modelosAutorizados = ['gemini-3.5-flash-lite', 'gemini-flash-latest', 'gemini-3.5-flash'];
+    const modelosAutorizados = ['gemini-3.5-flash-lite', 'gemini-flash-latest', 'gemini-3.5-flash', 'gemini-3.8-flash'];
     const opciones = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) };
     
     for (const modelo of modelosAutorizados) {
