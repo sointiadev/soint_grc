@@ -86,7 +86,7 @@ app.post('/api/analizar', upload.array('archivosSAP', 10), async (req, res) => {
         const totalVulnerabilidades = conteoSuperusuarios + conteoTablas + conteoSoD + 6; 
         
         // Extraemos una porción de los datos reales del CSV para que la IA vea los nombres y roles exactos
-        const muestraDatos = consolidadoDatosSAP.substring(0, 3500);
+        const muestraDatos = consolidadoDatosSAP.substring(0, 15000);
 
         const prompt = `
         Actúa como Socio Director de Auditoría SAP GRC de SOINT.
