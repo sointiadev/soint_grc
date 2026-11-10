@@ -96,7 +96,7 @@ app.post('/api/analizar', upload.array('archivosSAP', 10), async (req, res) => {
         - Manipulación tablas: ${conteoTablas} casos
         - Conflictos SoD: ${conteoSoD} casos
 
-        Muestra de datos crudos extraídos de las tablas SAP del cliente:
+        Muestra de datos crudos extraídos de las tablas SAP del cliente (analiza a fondo para extraer IDs, roles y transacciones):
         ---
         ${muestraDatos}
         ---
@@ -104,17 +104,20 @@ app.post('/api/analizar', upload.array('archivosSAP', 10), async (req, res) => {
         Genera DOS reportes distintos, usando EXACTAMENTE estos separadores en mayúsculas:
 
         [REPORTE_CLIENTE]
-        (Reporte ejecutivo anonimizado para el cliente, máx 400 palabras. Incluye:
-        1. Tablero Ejecutivo de Riesgos en tabla markdown.
-        2. Desglose Técnico usando máscaras como [USUARIO_01].
-        3. Llamado a agendar sesión con SOINT).
+        (REPORTE EJECUTIVO PARA EL CLIENTE - Tono: Urgencia extrema, dramático, alto riesgo financiero y reputacional. Extensión: ~500 palabras.
+        Estructura obligatoria:
+        1. Tablero Ejecutivo de Exposición (Tabla Markdown detallando el nivel de riesgo crítico).
+        2. Alerta de Vulnerabilidad y Riesgo Inminente de Fraude: Usa lenguaje alarmante y contundente. Menciona "Brechas críticas de seguridad", "Peligro inminente de fraude interno", "Bypass de controles SOX/COBIT" y "Manipulación silenciosa de estados financieros". Describe los vectores encontrados usando máscaras (ej. [USUARIO_01]), enfocándote en el desastre operativo y financiero que pueden causar en cualquier momento.
+        3. Consecuencias Catastróficas de Inacción: Describe detalladamente el impacto devastador de no remediar estas brechas HOY (pérdida de reputación, multas millonarias de entes reguladores, robos internos indetectables, caída del sistema).
+        4. Dictamen de Urgencia y Llamado a la Acción Obligatorio: Un párrafo final imperativo exigiendo agendar de inmediato la Mesa Técnica de Desanonimización con SOINT para intervenir el sistema antes de que el riesgo se materialice en una crisis real.)
 
         [REPORTE_SOINT]
-        (REPORTE TÉCNICO FORENSE Y PLAN DE REMEDIACIÓN PARA CONSULTORES SOINT. NO HAY LÍMITE DE PALABRAS.
+        (REPORTE FORENSE EXHAUSTIVO Y PLAN DE REMEDIACIÓN PARA CONSULTORES SOINT. SIN LÍMITE DE PALABRAS. Nivel técnico: Arquitecto SAP BASIS / Experto GRC.
         Estructura obligatoria:
-        1. Desglose de Hallazgos Críticos: Analiza la muestra de datos crudos y menciona explícitamente los IDs de usuarios SAP reales, roles y transacciones exactas que están generando los conflictos. NO uses máscaras.
-        2. Plan de Remediación Técnico (Paso a Paso): Para cada uno de los vectores identificados (Accesos críticos, Manipulación de tablas, SoD), detalla la solución técnica exacta que el equipo de SOINT debe implementar en el SAP del cliente (ej. objetos de autorización específicos a ajustar como S_TABU_DIS, roles derivados a rediseñar, o transacciones a bloquear).
-        3. Estrategia de Venta Técnica: Un párrafo final sobre cómo utilizar este nivel de detalle para cerrar el proyecto GRC.)
+        1. Identificación Forense ("La Pistola Humeante"): Analiza la muestra cruda minuciosamente. Lista los IDs de usuarios REALES (UNAME), nombres de perfiles (PROFILE/AGR_NAME), y transacciones (TCODE) exactas implicadas. Explica anomalías en fechas de validez o tipos de usuario.
+        2. Análisis de Cruce SoD (Segregación de Funciones): Explica técnicamente por qué las combinaciones encontradas son letales (ej. Acceso a creación de proveedores + ejecución de pagos). Menciona los objetos de autorización involucrados.
+        3. Plan de Remediación Técnica (Nivel PFCG/SU24): Instrucciones quirúrgicas para el consultor SOINT. Indica qué objetos (ej. S_TABU_DIS, S_TABU_NAM, S_DEVELOP) deben restringirse, qué valores (ACTVT) modificar, y qué roles compuestos rediseñar. Menciona el uso de SM20 para auditoría.
+        4. Playbook Comercial Estratégico para el Cierre: Argumentos precisos para el C-Level. Explícale al vendedor cómo usar estos datos exactos (IDs y fallas reales) en la reunión para generar shock en el Gerente Financiero o CISO, demostrando que SOINT tiene el control absoluto y es el único partner capaz de blindar su SAP.)
         `;
 
         const datosIA = await llamarIAMulticarril(prompt, process.env.GEMINI_API_KEY);
